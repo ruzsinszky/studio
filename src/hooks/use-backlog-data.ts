@@ -5,7 +5,7 @@ import type { Task, TeamMember, KanbanBoardData, KanbanColumn, RawTaskFromNewIte
 import { MOCK_TEAM_MEMBERS, MOCK_INITIAL_TASKS, getCapacityInStoryPoints } from '@/lib/mock-data';
 import { parseCsvData, processUploadedCsvs } from '@/lib/utils';
 import { type DropResult } from '@hello-pangea/dnd';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { balanceBacklog, type BalanceBacklogInput, type BalanceBacklogOutput } from '@/ai/flows/balance-backlog-suggestions';
 import { format } from 'date-fns';
 
