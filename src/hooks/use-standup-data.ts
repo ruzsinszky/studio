@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DailyEntry, TeamMember, CapacityFlag } from '@/types';
 import { MOCK_TEAM_MEMBERS, MOCK_INITIAL_DAILY_ENTRIES, CAPACITY_OPTIONS } from '@/lib/mock-data';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 // Simulate API latency
