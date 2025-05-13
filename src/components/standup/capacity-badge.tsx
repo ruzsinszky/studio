@@ -20,11 +20,11 @@ export default function CapacityBadge({ capacity }: CapacityBadgeProps) {
     <span
       className={cn(
         'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium',
-        option.color,
-        option.color.includes('bg-') ? 'text-white' : option.iconColor // Basic contrast logic
+        option.color, // This is the background color class e.g. bg-green-500
+        option.color.includes('bg-') ? 'text-foreground' : option.iconColor // Use text-foreground for label on colored backgrounds
       )}
     >
-      <Icon className={cn('h-3.5 w-3.5', option.color.includes('bg-') ? 'text-white/80' : option.iconColor)} />
+      <Icon className={cn('h-3.5 w-3.5', option.color.includes('bg-') ? 'text-foreground' : option.iconColor)} /> {/* Use text-foreground for icon */}
       {option.label}
     </span>
   );
