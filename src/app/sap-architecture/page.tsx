@@ -11,6 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, ShieldCheck, Info, Settings } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import mammoth from "mammoth";
+import * as XLSX from "xlsx";
+
+const ACCEPTED_FILE_TYPES = ".txt,.md,.doc,.docx,.xls,.xlsx,.ppt,.pptx,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
 export default function SapArchitecturePage() {
   const [inputText, setInputText] = useState<string>("");
@@ -21,43 +25,86 @@ export default function SapArchitecturePage() {
   const [customClientPlaceholder, setCustomClientPlaceholder] = useState<string>("");
   const { toast } = useToast();
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      if (file.type === "text/plain" || file.name.endsWith(".md")) {
+    if (!file) return;
+
+    setFileName(file.name);
+    setInputText(""); // Clear previous text
+    setIsLoading(true);
+
+    try {
+      const fileType = file.type;
+      const fileNameLower = file.name.toLowerCase();
+
+      if (fileNameLower.endsWith(".txt") || fileNameLower.endsWith(".md") || fileType === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => {
           if (e.target?.result) {
             setInputText(e.target.result as string);
-            setFileName(file.name);
-            toast({ title: "File loaded", description: `${file.name} content loaded into text area.` });
+            toast({ title: "File loaded", description: `${file.name} content loaded.` });
           }
+          setIsLoading(false);
         };
         reader.onerror = () => {
-          toast({
-            title: "File Read Error",
-            description: "Could not read the selected file.",
-            variant: "destructive",
-          });
-          setFileName(null);
+          toast({ title: "File Read Error", description: "Could not read the selected text file.", variant: "destructive" });
+          setIsLoading(false);
         };
         reader.readAsText(file);
+      } else if (fileNameLower.endsWith(".docx")) {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        setInputText(result.value);
+        toast({ title: "DOCX file loaded", description: `Text extracted from ${file.name}.` });
+        setIsLoading(false);
+      } else if (fileNameLower.endsWith(".xlsx")) {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        let fullText = "";
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const sheetText = XLSX.utils.sheet_to_txt(worksheet, { txtEOL: "\n" });
+          fullText += sheetText + "\n\n"; // Add some separation between sheets
+        });
+        setInputText(fullText.trim());
+        toast({ title: "XLSX file loaded", description: `Text extracted from ${file.name}.` });
+        setIsLoading(false);
+      } else if (fileNameLower.endsWith(".doc") || fileNameLower.endsWith(".xls") || fileNameLower.endsWith(".ppt") || fileNameLower.endsWith(".pptx")) {
+        toast({
+          title: "File Type Limitation",
+          description: `Direct text extraction for ${file.name} (${fileType}) is complex or not fully supported in the browser. Please convert to .docx, .xlsx, .txt or copy-paste the content.`,
+          variant: "default",
+          duration: 7000,
+        });
+        setInputText(`File "${file.name}" was uploaded, but direct text extraction for this format is limited. Please copy content manually or convert to a supported format like .docx or .xlsx.`);
+        setIsLoading(false);
       } else {
         toast({
-          title: "Invalid File Type",
-          description: "Please upload a .txt or .md file.",
+          title: "Unsupported File Type",
+          description: `File type for ${file.name} is not supported for direct text extraction. Try .txt, .md, .docx, or .xlsx.`,
           variant: "destructive",
         });
-        event.target.value = ""; // Reset file input
         setFileName(null);
+        setIsLoading(false);
+        (event.target as HTMLInputElement).value = ""; 
+        return;
       }
+    } catch (error) {
+      console.error("Error processing file:", error);
+      toast({
+        title: "File Processing Error",
+        description: `Could not process ${file.name}. Ensure it's a valid file format.`,
+        variant: "destructive",
+      });
+      setFileName(null);
+      setIsLoading(false);
     }
   };
 
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(event.target.value);
-    if (fileName) {
-      setFileName(null); 
+    if (fileName && event.target.value !== "") { // If user starts typing after uploading, clear filename
+        // setFileName(null); // Decided against this to keep filename visible even if text is edited.
     }
   };
 
@@ -119,15 +166,16 @@ export default function SapArchitecturePage() {
           <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
             <ShieldCheck className="h-8 w-8 text-primary" /> SAP Architecture Support Tools
           </h1>
-          <p className="text-muted-foreground">Currently featuring Document Anonymization with custom placeholders.</p>
+          <p className="text-muted-foreground">Document Anonymization supporting .txt, .md, .docx, .xlsx, and manual text input.</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Document & Text Anonymization</CardTitle>
             <CardDescription>
-              Upload a document (.txt, .md) or paste text to remove sensitive information. 
-              Project names, client names, and other PII will be replaced with specified placeholders or defaults like "[PROJECT_NAME_REDACTED]", "[CLIENT_NAME_REDACTED]", and "[SENSITIVE_INFO_REDACTED]".
+              Upload a document ({ACCEPTED_FILE_TYPES.split(',').filter(t => t.startsWith('.')).join(', ')}) or paste text to remove sensitive information. 
+              Project names, client names, and other PII will be replaced. 
+              For .doc, .xls, .ppt, .pptx, conversion to a modern format or copy-pasting is recommended for best results.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -137,18 +185,18 @@ export default function SapArchitecturePage() {
                   <Label htmlFor="document-upload" className="cursor-pointer">
                     <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                     <span className="text-sm font-medium">
-                      {fileName ? `Selected: ${fileName}` : "Upload Document (.txt, .md)"}
+                      {fileName ? `Selected: ${fileName}` : `Upload Document (${ACCEPTED_FILE_TYPES.split(',').filter(t => t.startsWith('.')).slice(0,4).join(', ')}, etc.)`}
                     </span>
                     <input
                       id="document-upload"
                       type="file"
-                      accept=".txt,.md,text/plain"
+                      accept={ACCEPTED_FILE_TYPES}
                       onChange={handleFileChange}
                       className="sr-only"
                     />
                   </Label>
                    {fileName && (
-                     <Button variant="link" size="sm" className="mt-2 text-xs" onClick={() => {setInputText(''); setFileName(null); (document.getElementById('document-upload') as HTMLInputElement).value = '';}}>Clear loaded file</Button>
+                     <Button variant="link" size="sm" className="mt-2 text-xs" onClick={() => {setInputText(''); setFileName(null); (document.getElementById('document-upload') as HTMLInputElement).value = ''; setIsLoading(false)}}>Clear loaded file</Button>
                    )}
                 </div>
                 
@@ -160,7 +208,7 @@ export default function SapArchitecturePage() {
 
                 <div>
                   <Label htmlFor="text-paste" className="block text-sm font-medium mb-2">
-                    Paste Text
+                    Paste Text (or text from unsupported files)
                   </Label>
                   <Textarea
                     id="text-paste"
@@ -169,6 +217,7 @@ export default function SapArchitecturePage() {
                     onChange={handleTextChange}
                     placeholder="Paste your SAP architecture notes or document content here..."
                     className="w-full shadow-sm"
+                    disabled={isLoading && fileName !== null} 
                   />
                 </div>
 
@@ -211,9 +260,8 @@ export default function SapArchitecturePage() {
                   </CardContent>
                 </Card>
 
-
                 <Button type="submit" className="w-full mt-4" disabled={isLoading || !inputText.trim()}>
-                  {isLoading ? "Anonymizing..." : "Anonymize Text"}
+                  {isLoading && fileName === null ? "Anonymizing..." : isLoading && fileName !== null ? "Processing File..." : "Anonymize Text"}
                 </Button>
               </div>
 
@@ -233,7 +281,7 @@ export default function SapArchitecturePage() {
                   <Info className="h-4 w-4" />
                   <AlertTitle>Review Carefully</AlertTitle>
                   <AlertDescription>
-                    Always review the anonymized text thoroughly to ensure all sensitive data has been correctly processed before sharing.
+                    Always review the anonymized text thoroughly to ensure all sensitive data has been correctly processed before sharing. AI-based anonymization may not be perfect.
                   </AlertDescription>
                 </Alert>
               </div>
