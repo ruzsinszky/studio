@@ -1,37 +1,43 @@
 
 import { NextResponse } from 'next/server';
-import { ai } from '@/ai/genkit'; // Assuming 'ai' is your configured genkit instance
+import { ai } from '@/ai/genkit'; 
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const textToAnonymize = body.text;
+    const customProjectPlaceholder = body.customProjectPlaceholder;
+    const customClientPlaceholder = body.customClientPlaceholder;
 
     if (!textToAnonymize || typeof textToAnonymize !== 'string' || !textToAnonymize.trim()) {
       return NextResponse.json({ error: 'No text provided or text is invalid' }, { status: 400 });
     }
 
-    // Check if Azure OpenAI plugin is configured and model name is set
-    // This is a placeholder check; actual model availability depends on genkit.ts setup
     if (!process.env.AZURE_OPENAI_API_KEY || !process.env.AZURE_OPENAI_ENDPOINT || !process.env.AZURE_OPENAI_DEPLOYMENT_NAME) {
        console.warn("Azure OpenAI environment variables might not be fully configured. Anonymization may use a default model if available or fail.");
     }
     
     const modelName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME 
       ? `azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`
-      : undefined; // Let Genkit pick a default if not specified and Azure is not the only plugin
+      : undefined;
 
-    const prompt = `You are an expert text anonymizer. Your task is to process the following text, which may contain sensitive information related to SAP architecture documents, project notes, or client communications.
-Identify and replace all specific mentions of:
-- Project names (e.g., "Project Phoenix", "Alpha Initiative")
-- Client names or company names (e.g., "Acme Corp", "XYZ Solutions")
-- Personal names (e.g., "John Doe", "Maria Garcia"), unless they are widely known public figures in a relevant technical SAP context (like authors of standards or well-known researchers).
-- Contact information (e.g., email addresses, phone numbers, Slack handles)
-- Specific street addresses or locations that could identify a private site.
-- Any other details that could be considered sensitive or personally identifiable information (PII).
+    // Define placeholders
+    const projectPlaceholder = customProjectPlaceholder || "[PROJECT_NAME_REDACTED]";
+    const clientPlaceholder = customClientPlaceholder || "[CLIENT_NAME_REDACTED]";
+    const otherPiiPlaceholder = "[SENSITIVE_INFO_REDACTED]";
 
-Replace all identified sensitive information with the exact placeholder string: "[DUMMY_SAP_DATA]".
-Do not change the technical SAP terminology, architectural descriptions, or general business context unless it directly reveals PII.
+    const prompt = `You are an expert text anonymizer specializing in SAP architecture documents, project notes, and client communications.
+Your task is to process the following text and replace sensitive information according to these rules:
+
+1.  Project Names: Identify all specific mentions of project names (e.g., "Project Phoenix", "Alpha Initiative"). Replace them with: '${projectPlaceholder}'.
+2.  Client/Company Names: Identify all specific mentions of client names or company names (e.g., "Acme Corp", "XYZ Solutions"). Replace them with: '${clientPlaceholder}'.
+3.  Other PII: Identify and replace all of the following with '${otherPiiPlaceholder}':
+    *   Personal names (e.g., "John Doe", "Maria Garcia"), unless they are widely known public figures in a relevant technical SAP context (like authors of standards or well-known researchers).
+    *   Contact information (e.g., email addresses, phone numbers, Slack handles).
+    *   Specific street addresses or locations that could identify a private site.
+    *   Any other details that could be considered sensitive or personally identifiable information (PII) not covered by project or client names.
+
+Do not change technical SAP terminology, architectural descriptions, or general business context unless it directly reveals PII.
 Preserve the original formatting (like line breaks and paragraphs) as much as possible.
 
 Original Text:
@@ -44,9 +50,8 @@ Anonymized Text:`;
 
     const response = await ai.generate({
       prompt: prompt,
-      ...(modelName && { model: modelName }), // Conditionally add model if AZURE_OPENAI_DEPLOYMENT_NAME is set
+      ...(modelName && { model: modelName }),
       config: {
-        // Example safety settings - adjust as needed
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -56,18 +61,14 @@ Anonymized Text:`;
 
     const anonymizedText = response.text;
 
-    if (anonymizedText === undefined) { // Check for undefined specifically
+    if (anonymizedText === undefined) {
       return NextResponse.json({ error: 'Anonymization failed or returned no text. The model might have refused to generate content.' }, { status: 500 });
     }
     
-    // If the text is empty string, it means the model generated nothing, which could be a refusal or an issue.
     if (anonymizedText.trim() === "") {
         console.warn("Anonymization resulted in empty text. This might indicate a content generation refusal by the model or an issue with the prompt/model response.");
-        // Depending on requirements, you might want to return an error or the empty string.
-        // For safety, returning an error if it's unexpectedly empty.
         return NextResponse.json({ error: 'Anonymization resulted in empty text. Please check the input or model behavior.' }, { status: 500 });
     }
-
 
     return NextResponse.json({ anonymizedText });
 
@@ -77,7 +78,6 @@ Anonymized Text:`;
     if (error.message) {
       errorMessage = error.message;
     }
-    // Check for specific Genkit or API errors if possible
     if (error.cause && typeof error.cause === 'string' && error.cause.includes('authentication')) {
         errorMessage = "Authentication failed. Please check your Azure OpenAI API key and endpoint configuration."
     } else if (error.message && error.message.toLowerCase().includes('deployment not found')) {

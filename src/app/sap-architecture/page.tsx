@@ -6,9 +6,10 @@ import AppLayout from "@/components/layout/app-layout";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, ShieldCheck, Info } from "lucide-react";
+import { UploadCloud, ShieldCheck, Info, Settings } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function SapArchitecturePage() {
@@ -16,6 +17,8 @@ export default function SapArchitecturePage() {
   const [anonymizedText, setAnonymizedText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [customProjectPlaceholder, setCustomProjectPlaceholder] = useState<string>("");
+  const [customClientPlaceholder, setCustomClientPlaceholder] = useState<string>("");
   const { toast } = useToast();
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +57,7 @@ export default function SapArchitecturePage() {
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(event.target.value);
     if (fileName) {
-      setFileName(null); // Clear filename if text is manually changed after file upload
+      setFileName(null); 
     }
   };
 
@@ -79,7 +82,11 @@ export default function SapArchitecturePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: inputText }),
+        body: JSON.stringify({ 
+          text: inputText,
+          customProjectPlaceholder: customProjectPlaceholder.trim() || undefined,
+          customClientPlaceholder: customClientPlaceholder.trim() || undefined,
+        }),
       });
 
       if (!response.ok) {
@@ -112,7 +119,7 @@ export default function SapArchitecturePage() {
           <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
             <ShieldCheck className="h-8 w-8 text-primary" /> SAP Architecture Support Tools
           </h1>
-          <p className="text-muted-foreground">Currently featuring Document Anonymization.</p>
+          <p className="text-muted-foreground">Currently featuring Document Anonymization with custom placeholders.</p>
         </div>
 
         <Card>
@@ -120,7 +127,7 @@ export default function SapArchitecturePage() {
             <CardTitle>Document & Text Anonymization</CardTitle>
             <CardDescription>
               Upload a document (.txt, .md) or paste text to remove sensitive information. 
-              Project names, client names, and other PII will be replaced with "[DUMMY_SAP_DATA]".
+              Project names, client names, and other PII will be replaced with specified placeholders or defaults like "[PROJECT_NAME_REDACTED]", "[CLIENT_NAME_REDACTED]", and "[SENSITIVE_INFO_REDACTED]".
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -164,7 +171,48 @@ export default function SapArchitecturePage() {
                     className="w-full shadow-sm"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading || !inputText.trim()}>
+
+                <Card className="mt-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                       <Settings className="h-5 w-5 text-muted-foreground"/> Optional Placeholder Settings
+                    </CardTitle>
+                     <CardDescription className="text-xs">
+                       Specify custom text to replace project or client names. Leave blank for defaults.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 pt-2">
+                    <div>
+                      <Label htmlFor="custom-project-placeholder" className="text-sm font-medium">
+                        Custom Project Placeholder
+                      </Label>
+                      <Input
+                        id="custom-project-placeholder"
+                        type="text"
+                        value={customProjectPlaceholder}
+                        onChange={(e) => setCustomProjectPlaceholder(e.target.value)}
+                        placeholder="e.g., [PROJECT_ALPHA]"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="custom-client-placeholder" className="text-sm font-medium">
+                        Custom Client Placeholder
+                      </Label>
+                      <Input
+                        id="custom-client-placeholder"
+                        type="text"
+                        value={customClientPlaceholder}
+                        onChange={(e) => setCustomClientPlaceholder(e.target.value)}
+                        placeholder="e.g., [CLIENT_ACME]"
+                        className="mt-1"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+
+                <Button type="submit" className="w-full mt-4" disabled={isLoading || !inputText.trim()}>
                   {isLoading ? "Anonymizing..." : "Anonymize Text"}
                 </Button>
               </div>
