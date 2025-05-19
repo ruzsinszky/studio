@@ -3,13 +3,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardList, LayoutDashboard, CalendarDays, BarChart3, Bot, ShieldCheck } from 'lucide-react';
+import { ClipboardList, LayoutDashboard, CalendarDays, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Daily Stand-up', icon: CalendarDays },
   { href: '/backlog', label: 'Backlog Tracker', icon: LayoutDashboard },
-  { href: '/anonymize', label: 'Text Anonymizer', icon: Bot }, // Assuming this was the previous anonymize page
   { href: '/sap-architecture', label: 'SAP Support', icon: ShieldCheck },
 ];
 

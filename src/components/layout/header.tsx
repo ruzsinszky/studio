@@ -11,7 +11,6 @@ export default function AppHeader() {
   const getPageTitle = () => {
     if (pathname === '/') return 'Daily Stand-up Board';
     if (pathname === '/backlog') return 'Backlog Tracker';
-    if (pathname === '/anonymize') return 'Text Anonymizer';
     if (pathname === '/sap-architecture') return 'SAP Architecture Support';
     return 'Standuply';
   };
