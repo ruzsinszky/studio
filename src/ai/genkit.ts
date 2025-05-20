@@ -1,17 +1,24 @@
+
 import {genkit} from 'genkit';
-// import * as AzureOpenAIPlugin from 'genkitx-azure-openai'; // Temporarily commented out due to package structure issue
+// import {azureOpenAi} from 'genkitx-azure-openai'; // Use direct import as per plugin docs
 
 export const ai = genkit({
   plugins: [
-    // AzureOpenAIPlugin.azureOpenAi({ // Temporarily commented out
-    //   apiKey: process.env.AZURE_OPENAI_API_KEY,
-    //   endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-    //   // You may also need to specify apiVersion depending on your Azure setup and plugin requirements.
-    //   apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-15-preview', // Using a default if not provided by env var
-    //   // deploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME, // This might be needed depending on the plugin configuration and how models are specified.
+    // azureOpenAi({
+    //   apiKey: process.env.AZURE_OPENAI_API_KEY!, 
+    //   endpoint: process.env.AZURE_OPENAI_ENDPOINT!, 
+    //   apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-15-preview', 
+    //   chatDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME!, 
     // }),
   ],
-  // The model configuration below depends on the Azure OpenAI plugin.
-  // It's commented out as the plugin itself is causing a build error.
-  // model: `azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`, 
+  // model: `azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`, // This can be left commented if specified in each call
 });
+
+// Add a console warning if Azure environment variables are set but the plugin is commented out.
+if (process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_ENDPOINT && process.env.AZURE_OPENAI_DEPLOYMENT_NAME) {
+  console.warn(
+    "WARNING: Azure OpenAI environment variables are set, but the 'genkitx-azure-openai' " +
+    "plugin is currently commented out in src/ai/genkit.ts due to a persistent package import issue. " +
+    "Azure OpenAI functionality will be unavailable until this is resolved."
+  );
+}

@@ -4,6 +4,14 @@ import { ai } from '@/ai/genkit';
 
 export async function POST(request: Request) {
   try {
+    // Check if Azure OpenAI is intended to be used but might be disabled
+    if (process.env.AZURE_OPENAI_DEPLOYMENT_NAME && !ai.listModels().includes(`azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`)) {
+        console.error("SAP Anonymization: Azure OpenAI model specified in .env but not available in Genkit. The 'genkitx-azure-openai' plugin might be disabled or misconfigured due to package issues.");
+        return NextResponse.json({ 
+            error: "SAP Anonymization service is temporarily unavailable due to an issue with the Azure OpenAI integration. Please check server logs or contact support. The 'genkitx-azure-openai' package may need attention." 
+        }, { status: 503 }); // Service Unavailable
+    }
+      
     const body = await request.json();
     const textToAnonymize = body.text;
     const customProjectPlaceholder = body.customProjectPlaceholder;
@@ -16,11 +24,23 @@ export async function POST(request: Request) {
 
     if (!process.env.AZURE_OPENAI_API_KEY || !process.env.AZURE_OPENAI_ENDPOINT || !process.env.AZURE_OPENAI_DEPLOYMENT_NAME) {
        console.warn("Azure OpenAI environment variables might not be fully configured. Anonymization may use a default model if available or fail.");
+       // If no Azure deployment is specified, we might not want to error out here if a default Genkit model could be used.
+       // However, this route is specifically for Azure-based anonymization as per previous logic.
+       // For now, if these are not set, the modelName will be undefined, and ai.generate might fail or use a default.
+       // Let's add a specific check if the Azure model is expected.
+       if (!process.env.AZURE_OPENAI_DEPLOYMENT_NAME) {
+         return NextResponse.json({ error: 'Azure OpenAI deployment name is not configured in environment variables. Cannot proceed with anonymization.' }, { status: 500 });
+       }
     }
     
     const modelName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME 
       ? `azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`
       : undefined;
+
+    if (!modelName) {
+        // This case should ideally be caught by the check above, but as a safeguard:
+        return NextResponse.json({ error: 'Azure OpenAI model configuration is missing.' }, { status: 500 });
+    }
 
     const defaultProjectPlaceholder = "[PROJECT_NAME_REDACTED]";
     const defaultClientPlaceholder = "[CLIENT_NAME_REDACTED]";
@@ -81,7 +101,7 @@ Anonymized Text:`;
 
     const response = await ai.generate({
       prompt: prompt,
-      ...(modelName && { model: modelName }),
+      model: modelName, // Explicitly use the configured modelName
       config: {
         safetySettings: [
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -109,10 +129,11 @@ Anonymized Text:`;
     if (error.message) {
       errorMessage = error.message;
     }
+    // Check for specific error messages that might indicate model not found or auth issues
     if (error.cause && typeof error.cause === 'string' && error.cause.includes('authentication')) {
         errorMessage = "Authentication failed. Please check your Azure OpenAI API key and endpoint configuration."
-    } else if (error.message && error.message.toLowerCase().includes('deployment not found')) {
-        errorMessage = "The specified Azure OpenAI deployment name was not found. Please check your configuration."
+    } else if (error.message && (error.message.toLowerCase().includes('deployment not found') || error.message.toLowerCase().includes('model not found'))) {
+        errorMessage = "The specified Azure OpenAI deployment/model name was not found or is not accessible. Please check your configuration and ensure the model is available in Genkit."
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
