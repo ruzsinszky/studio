@@ -8,6 +8,7 @@ export async function POST(request: Request) {
     const textToAnonymize = body.text;
     const customProjectPlaceholder = body.customProjectPlaceholder;
     const customClientPlaceholder = body.customClientPlaceholder;
+    const theme = body.theme;
 
     if (!textToAnonymize || typeof textToAnonymize !== 'string' || !textToAnonymize.trim()) {
       return NextResponse.json({ error: 'No text provided or text is invalid' }, { status: 400 });
@@ -21,24 +22,54 @@ export async function POST(request: Request) {
       ? `azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`
       : undefined;
 
-    // Define placeholders
-    const projectPlaceholder = customProjectPlaceholder || "[PROJECT_NAME_REDACTED]";
-    const clientPlaceholder = customClientPlaceholder || "[CLIENT_NAME_REDACTED]";
-    const otherPiiPlaceholder = "[SENSITIVE_INFO_REDACTED]";
+    const defaultProjectPlaceholder = "[PROJECT_NAME_REDACTED]";
+    const defaultClientPlaceholder = "[CLIENT_NAME_REDACTED]";
+    const defaultOtherPiiPlaceholder = "[SENSITIVE_INFO_REDACTED]";
 
-    const prompt = `You are an expert text anonymizer specializing in SAP architecture documents, project notes, and client communications.
-Your task is to process the following text and replace sensitive information according to these rules:
+    let projectReplacementInstruction: string;
+    if (customProjectPlaceholder) {
+      projectReplacementInstruction = `Replace them with: '${customProjectPlaceholder}'`;
+    } else if (theme) {
+      projectReplacementInstruction = `Replace project names with terms, characters, or concepts fitting the theme: '${theme}'. Be creative and consistent with the theme.`;
+    } else {
+      projectReplacementInstruction = `Replace them with: '${defaultProjectPlaceholder}'`;
+    }
 
-1.  Project Names: Identify all specific mentions of project names (e.g., "Project Phoenix", "Alpha Initiative"). Replace them with: '${projectPlaceholder}'.
-2.  Client/Company Names: Identify all specific mentions of client names or company names (e.g., "Acme Corp", "XYZ Solutions"). Replace them with: '${clientPlaceholder}'.
-3.  Other PII: Identify and replace all of the following with '${otherPiiPlaceholder}':
-    *   Personal names (e.g., "John Doe", "Maria Garcia"), unless they are widely known public figures in a relevant technical SAP context (like authors of standards or well-known researchers).
-    *   Contact information (e.g., email addresses, phone numbers, Slack handles).
-    *   Specific street addresses or locations that could identify a private site.
-    *   Any other details that could be considered sensitive or personally identifiable information (PII) not covered by project or client names.
+    let clientReplacementInstruction: string;
+    if (customClientPlaceholder) {
+      clientReplacementInstruction = `Replace them with: '${customClientPlaceholder}'`;
+    } else if (theme) {
+      clientReplacementInstruction = `Replace client/company names with terms, characters, or concepts fitting the theme: '${theme}'. Be creative and consistent with the theme.`;
+    } else {
+      clientReplacementInstruction = `Replace them with: '${defaultClientPlaceholder}'`;
+    }
 
-Do not change technical SAP terminology, architectural descriptions, or general business context unless it directly reveals PII.
-Preserve the original formatting (like line breaks and paragraphs) as much as possible.
+    let otherPiiReplacementInstruction: string;
+    if (theme) {
+      otherPiiReplacementInstruction = `Replace these with terms, characters, or concepts fitting the theme: '${theme}'. For example, instead of 'John Doe', if the theme is 'Star Wars', you might use 'Jedi Master Kit Fisto' or a similar appropriate named entity from the theme.`;
+    } else {
+      otherPiiReplacementInstruction = `Replace all of the following with '${defaultOtherPiiPlaceholder}'`;
+    }
+
+    let thematicGuidance = "";
+    if (theme) {
+      thematicGuidance = `\nImportant Thematic Guidance: When applying replacements based on the theme ('${theme}'), strive for creativity and relevance to the theme. However, ensure the replacements maintain a level of professionalism suitable for the document's context where possible. For example, if a project name is 'Project Phoenix' and the theme is 'Lord of the Rings', a replacement could be 'The Isengard Initiative' or 'Project Mithril'. If a client is 'Acme Corp', it could become 'Saruman Industries' or 'The Rohan Group'. Try to find analogous professional-sounding terms if the theme is very whimsical. Be consistent in your replacements.`;
+    }
+
+    const prompt = `You are an expert text anonymizer and creative writer specializing in SAP architecture documents, project notes, and client communications.
+Your task is to process the following text and replace sensitive information according to these rules, prioritizing in the order listed:
+
+1.  Project Names: Identify all specific mentions of project names (e.g., "Project Phoenix", "Alpha Initiative"). ${projectReplacementInstruction}
+2.  Client/Company Names: Identify all specific mentions of client names or company names (e.g., "Acme Corp", "XYZ Solutions"). ${clientReplacementInstruction}
+3.  Other PII: Identify and ${otherPiiReplacementInstruction}:
+    *   Personal names (e.g., "John Doe", "Maria Garcia"), unless they are widely known public figures in a relevant technical SAP context (like authors of standards or well-known researchers). If using a theme, replace with thematic character names or titles.
+    *   Contact information (e.g., email addresses, phone numbers, Slack handles). If using a theme, you can create fictional thematic contact details.
+    *   Specific street addresses or locations that could identify a private site. If using a theme, replace with thematic locations.
+    *   Any other details that could be considered sensitive or personally identifiable information (PII) not covered by project or client names. Apply thematic replacement if a theme is active.
+${thematicGuidance}
+Do not change technical SAP terminology (like S/4HANA, BTP, Fiori, ABAP, specific T-Codes unless they embed PII), architectural descriptions, or general business context unless it directly reveals PII or is part of the thematic replacement strategy.
+The goal is to make the document safe to share while being creatively aligned with the theme if one is provided.
+Preserve the original formatting (like line breaks, paragraphs, and markdown if present) as much as possible.
 
 Original Text:
 ---

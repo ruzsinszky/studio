@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, ShieldCheck, Info, Settings } from "lucide-react";
+import { UploadCloud, ShieldCheck, Info, Settings, Wand2 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import mammoth from "mammoth";
 import * as XLSX from "xlsx";
@@ -23,6 +23,7 @@ export default function SapArchitecturePage() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [customProjectPlaceholder, setCustomProjectPlaceholder] = useState<string>("");
   const [customClientPlaceholder, setCustomClientPlaceholder] = useState<string>("");
+  const [theme, setTheme] = useState<string>("");
   const { toast } = useToast();
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +65,7 @@ export default function SapArchitecturePage() {
         workbook.SheetNames.forEach(sheetName => {
           const worksheet = workbook.Sheets[sheetName];
           const sheetText = XLSX.utils.sheet_to_txt(worksheet, { txtEOL: "\n" });
-          fullText += sheetText + "\n\n"; // Add some separation between sheets
+          fullText += sheetText + "\n\n"; 
         });
         setInputText(fullText.trim());
         toast({ title: "XLSX file loaded", description: `Text extracted from ${file.name}.` });
@@ -103,9 +104,6 @@ export default function SapArchitecturePage() {
 
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(event.target.value);
-    if (fileName && event.target.value !== "") { // If user starts typing after uploading, clear filename
-        // setFileName(null); // Decided against this to keep filename visible even if text is edited.
-    }
   };
 
   const handleAnonymize = async (event: FormEvent) => {
@@ -133,6 +131,7 @@ export default function SapArchitecturePage() {
           text: inputText,
           customProjectPlaceholder: customProjectPlaceholder.trim() || undefined,
           customClientPlaceholder: customClientPlaceholder.trim() || undefined,
+          theme: theme.trim() || undefined,
         }),
       });
 
@@ -145,7 +144,7 @@ export default function SapArchitecturePage() {
       setAnonymizedText(data.anonymizedText);
       toast({
         title: "Success",
-        description: "Text has been anonymized.",
+        description: "Text has been anonymized/thematized.",
       });
     } catch (error: any) {
       toast({
@@ -171,11 +170,12 @@ export default function SapArchitecturePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Document & Text Anonymization</CardTitle>
+            <CardTitle>Document & Text Anonymization / Thematization</CardTitle>
             <CardDescription>
-              Upload a document ({ACCEPTED_FILE_TYPES.split(',').filter(t => t.startsWith('.')).join(', ')}) or paste text to remove sensitive information. 
-              Project names, client names, and other PII will be replaced. 
-              For .doc, .xls, .ppt, .pptx, conversion to a modern format or copy-pasting is recommended for best results.
+              Upload a document or paste text. Sensitive information like project names, client names, and PII will be replaced.
+              Optionally, set custom placeholders or a theme. Custom placeholders for project/client names take precedence. 
+              If a theme is set, it will be used for other PII, and for project/client names if custom placeholders are not provided.
+              For .doc, .xls, .ppt, .pptx, conversion or copy-pasting is recommended.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -224,10 +224,10 @@ export default function SapArchitecturePage() {
                 <Card className="mt-4">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg flex items-center gap-2">
-                       <Settings className="h-5 w-5 text-muted-foreground"/> Optional Placeholder Settings
+                       <Settings className="h-5 w-5 text-muted-foreground"/> Optional Anonymization Settings
                     </CardTitle>
                      <CardDescription className="text-xs">
-                       Specify custom text to replace project or client names. Leave blank for defaults.
+                       Specify custom text to replace project/client names, or provide a theme for creative replacements.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3 pt-2">
@@ -240,7 +240,7 @@ export default function SapArchitecturePage() {
                         type="text"
                         value={customProjectPlaceholder}
                         onChange={(e) => setCustomProjectPlaceholder(e.target.value)}
-                        placeholder="e.g., [PROJECT_ALPHA]"
+                        placeholder="e.g., [PROJECT_ALPHA] (Overrides theme for projects)"
                         className="mt-1"
                       />
                     </div>
@@ -253,7 +253,20 @@ export default function SapArchitecturePage() {
                         type="text"
                         value={customClientPlaceholder}
                         onChange={(e) => setCustomClientPlaceholder(e.target.value)}
-                        placeholder="e.g., [CLIENT_ACME]"
+                        placeholder="e.g., [CLIENT_ACME] (Overrides theme for clients)"
+                        className="mt-1"
+                      />
+                    </div>
+                     <div>
+                      <Label htmlFor="theme" className="text-sm font-medium flex items-center gap-1">
+                        <Wand2 className="h-4 w-4"/> Theme (Optional)
+                      </Label>
+                      <Input
+                        id="theme"
+                        type="text"
+                        value={theme}
+                        onChange={(e) => setTheme(e.target.value)}
+                        placeholder="e.g., Star Wars, Cyberpunk, Medieval Fantasy"
                         className="mt-1"
                       />
                     </div>
@@ -261,27 +274,27 @@ export default function SapArchitecturePage() {
                 </Card>
 
                 <Button type="submit" className="w-full mt-4" disabled={isLoading || !inputText.trim()}>
-                  {isLoading && fileName === null ? "Anonymizing..." : isLoading && fileName !== null ? "Processing File..." : "Anonymize Text"}
+                  {isLoading && fileName === null ? "Anonymizing..." : isLoading && fileName !== null ? "Processing File..." : "Anonymize / Thematize Text"}
                 </Button>
               </div>
 
               <div className="space-y-4">
                 <Label htmlFor="anonymized-output" className="block text-sm font-medium">
-                  Anonymized Output
+                  Anonymized / Thematized Output
                 </Label>
                 <Textarea
                   id="anonymized-output"
                   rows={inputText ? Math.max(10, inputText.split('\n').length + 2) : 10}
                   value={anonymizedText}
                   readOnly
-                  placeholder="Anonymized text will appear here."
+                  placeholder="Anonymized/thematized text will appear here."
                   className="w-full bg-muted/30 shadow-sm"
                 />
                  <Alert>
                   <Info className="h-4 w-4" />
                   <AlertTitle>Review Carefully</AlertTitle>
                   <AlertDescription>
-                    Always review the anonymized text thoroughly to ensure all sensitive data has been correctly processed before sharing. AI-based anonymization may not be perfect.
+                    Always review the output thoroughly to ensure all sensitive data has been correctly processed and the thematization is appropriate before sharing. AI-based processing may not be perfect.
                   </AlertDescription>
                 </Alert>
               </div>
