@@ -2,105 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 220 20% 96%; /* Light grayish blue */
-    --foreground: 220 10% 20%; /* Dark grayish blue */
+    --background: 240 58% 94%; /* Lavender - Base */
+    --foreground: 222.2 47.4% 11.2%; /* Dark Slate Blue - Main Text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 10% 20%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 222.2 47.4% 11.2%; /* Dark Slate Blue */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 20%;
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 222.2 47.4% 11.2%; /* Dark Slate Blue */
 
-    --primary: 207 98% 58%; /* Calming Blue */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 220 60% 50%; /* Medium Blue - Primary Actions */
+    --primary-foreground: 0 0% 100%; /* White - Text on Primary */
 
-    --secondary: 220 15% 90%; /* Slightly darker light gray */
-    --secondary-foreground: 220 10% 20%;
+    --secondary: 230 50% 90%; /* Light Soft Lavender/Blue - Secondary Actions */
+    --secondary-foreground: 220 50% 30%; /* Dark Desaturated Blue - Text on Secondary */
 
-    --muted: 220 15% 88%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 230 30% 85%; /* Light Gray-Blue - Muted Text / Subtle Backgrounds */
+    --muted-foreground: 220 25% 45%; /* Medium-Dark Gray-Blue - Text for Muted Contexts */
 
-    --accent: 120 39% 55%; /* Green */
-    --accent-foreground: 0 0% 100%; /* White */
-    
-    --destructive: 4 90% 58%; /* Red */
+    --accent: 260 70% 60%; /* Bright Purple - General Accents, Active States */
+    --accent-foreground: 0 0% 100%; /* White - Text on Accent */
+
+    --destructive: 0 84.2% 60.2%; /* Standard Red for destructive actions */
     --destructive-foreground: 0 0% 100%; /* White */
 
-    --border: 220 15% 85%;
-    --input: 220 15% 85%;
-    --ring: 207 98% 58%; /* Calming Blue */
+    --border: 230 40% 88%; /* Soft Light Blue/Gray - Borders */
+    --input: 230 40% 88%; /* Soft Light Blue/Gray - Input Borders/Backgrounds */
+    --ring: 220 60% 50%; /* Medium Blue - Focus Rings (match Primary) */
 
     --radius: 0.5rem;
 
-    /* Chart specific colors */
-    --chart-1: 207 98% 58%; /* Blue */
-    --chart-2: 120 39% 55%; /* Green */
-    --chart-3: 30 90% 60%;  /* Orange */
-    --chart-4: 4 90% 58%;   /* Red */
-    --chart-5: 260 70% 65%; /* Purple */
+    /* Sidebar Specific Variables - Light Theme */
+    --sidebar-background: 240 30% 25%; /* Dark Desaturated Purple/Blue */
+    --sidebar-foreground: 240 20% 85%; /* Light Lavender/Gray Text */
+    --sidebar-primary: 260 70% 65%;    /* Vibrant Purple - Active Sidebar Item */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
+    --sidebar-accent: 240 25% 35%;     /* Lighter than sidebar-bg for Hover */
+    --sidebar-accent-foreground: 0 0% 100%; /* White */
+    --sidebar-border: 240 20% 20%;     /* Darker Border for Sidebar */
+    --sidebar-ring: 260 70% 65%;       /* Match Sidebar Primary */
 
-    /* Sidebar specific colors */
-    --sidebar-background: 220 25% 15%; /* Dark Blue-Gray */
-    --sidebar-foreground: 220 20% 90%; /* Light Gray for text */
-    --sidebar-primary: 207 98% 70%; /* Lighter Blue for active items */
-    --sidebar-primary-foreground: 220 25% 10%; /* Dark text for active items */
-    --sidebar-accent: 220 25% 25%; /* Hover items */
-    --sidebar-accent-foreground: 220 20% 95%;
-    --sidebar-border: 220 25% 20%;
-    --sidebar-ring: 207 98% 58%;
+    /* Chart Colors - Light Theme */
+    --chart-1: 220 70% 60%; /* Vibrant Blue */
+    --chart-2: 260 70% 65%; /* Vibrant Purple */
+    --chart-3: 180 50% 55%; /* Teal/Cyan */
+    --chart-4: 30 80% 60%;  /* Orange */
+    --chart-5: 330 70% 65%; /* Pink/Magenta */
   }
 
   .dark {
-    --background: 220 10% 10%;
-    --foreground: 220 20% 98%;
+    --background: 224 71% 4%; /* Very Dark Blue - Base */
+    --foreground: 213 31% 91%; /* Light Gray - Main Text */
 
-    --card: 220 10% 15%;
-    --card-foreground: 220 20% 98%;
+    --card: 220 30% 12%; /* Dark Gray-Blue */
+    --card-foreground: 213 31% 91%; /* Light Gray */
 
-    --popover: 220 10% 15%;
-    --popover-foreground: 220 20% 98%;
+    --popover: 220 30% 12%; /* Dark Gray-Blue */
+    --popover-foreground: 213 31% 91%; /* Light Gray */
 
-    --primary: 207 98% 58%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 220 60% 70%; /* Light Blue - Primary Actions */
+    --primary-foreground: 220 60% 10%; /* Very Dark Blue - Text on Primary */
 
-    --secondary: 220 10% 25%;
-    --secondary-foreground: 220 20% 98%;
+    --secondary: 220 25% 20%; /* Dark Muted Blue - Secondary Actions */
+    --secondary-foreground: 220 25% 80%; /* Light Muted Blue - Text on Secondary */
 
-    --muted: 220 10% 25%;
-    --muted-foreground: 220 20% 65%;
-
-    --accent: 120 39% 55%;
-    --accent-foreground: 0 0% 100%;
+    --muted: 220 20% 35%; /* Medium Dark Gray-Blue - Muted Text / Subtle Backgrounds */
+    --muted-foreground: 220 15% 65%; /* Medium Light Gray-Blue - Text for Muted Contexts */
     
-    --destructive: 4 90% 58%;
-    --destructive-foreground: 0 0% 100%;
+    --accent: 260 60% 70%; /* Light Purple - General Accents */
+    --accent-foreground: 260 60% 10%; /* Dark Purple - Text on Accent */
 
-    --border: 220 10% 30%;
-    --input: 220 10% 30%;
-    --ring: 207 98% 58%;
+    --destructive: 0 62.8% 30.6%; /* Darker Red */
+    --destructive-foreground: 0 0% 100%; /* White */
 
-    /* Chart specific colors for dark mode - can be same or adjusted */
-    --chart-1: 207 98% 65%;
-    --chart-2: 120 39% 60%;
-    --chart-3: 30 90% 65%;
-    --chart-4: 4 90% 62%;
-    --chart-5: 260 70% 70%;
+    --border: 220 20% 25%; /* Dark Gray-Blue - Borders */
+    --input: 220 20% 25%; /* Dark Gray-Blue - Input Borders/Backgrounds */
+    --ring: 220 60% 70%; /* Light Blue - Focus Rings (match Dark Primary) */
 
-     /* Sidebar specific colors for dark mode */
-    --sidebar-background: 220 25% 10%; /* Even Darker Blue-Gray */
-    --sidebar-foreground: 220 20% 90%; 
-    --sidebar-primary: 207 98% 65%; 
-    --sidebar-primary-foreground: 220 25% 5%; 
-    --sidebar-accent: 220 25% 20%; 
-    --sidebar-accent-foreground: 220 20% 95%;
-    --sidebar-border: 220 25% 15%;
-    --sidebar-ring: 207 98% 58%;
+    /* Sidebar Specific Variables - Dark Theme */
+    --sidebar-background: 220 40% 10%; /* Very Dark, Slightly Bluer than main dark-bg */
+    --sidebar-foreground: 220 20% 75%; /* Light Gray-Blue Text */
+    --sidebar-primary: 260 70% 75%;    /* Brighter Purple - Active Sidebar Item */
+    --sidebar-primary-foreground: 260 70% 15%; /* Dark Purple */
+    --sidebar-accent: 220 30% 18%;     /* Lighter than sidebar-bg for Hover */
+    --sidebar-accent-foreground: 220 20% 85%; /* Lighter Gray-Blue */
+    --sidebar-border: 220 40% 8%;      /* Even Darker Border for Sidebar */
+    --sidebar-ring: 260 70% 75%;       /* Match Sidebar Primary */
+
+    /* Chart Colors - Dark Theme */
+    --chart-1: 220 70% 65%; /* Blue - Adjusted for Dark */
+    --chart-2: 260 70% 70%; /* Purple - Adjusted for Dark */
+    --chart-3: 180 50% 60%; /* Teal/Cyan - Adjusted for Dark */
+    --chart-4: 30 80% 65%;  /* Orange - Adjusted for Dark */
+    --chart-5: 330 70% 70%; /* Pink/Magenta - Adjusted for Dark */
   }
 }
 
@@ -110,7 +106,5 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 }
