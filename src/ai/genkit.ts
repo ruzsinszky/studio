@@ -4,12 +4,12 @@ import {genkit} from 'genkit';
 
 export const ai = genkit({
   plugins: [
-    // azureOpenAi({
-    //   apiKey: process.env.AZURE_OPENAI_API_KEY!, 
-    //   endpoint: process.env.AZURE_OPENAI_ENDPOINT!, 
-    //   apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-15-preview', 
-    //   chatDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME!, 
-    // }),
+    //  azureOpenAi({
+    //    apiKey: process.env.AZURE_OPENAI_API_KEY!, 
+    //    endpoint: process.env.AZURE_OPENAI_ENDPOINT!, 
+    //    apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-02-15-preview', 
+    //    chatDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME!, 
+    //  }),
   ],
   // model: `azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`, // This can be left commented if specified in each call
 });
@@ -22,3 +22,4 @@ if (process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_ENDPOINT && pro
     "Azure OpenAI functionality will be unavailable until this is resolved."
   );
 }
+
