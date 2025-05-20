@@ -4,13 +4,9 @@ import { ai } from '@/ai/genkit';
 
 export async function POST(request: Request) {
   try {
-    // Check if Azure OpenAI is intended to be used but might be disabled
-    if (process.env.AZURE_OPENAI_DEPLOYMENT_NAME && !ai.listModels().includes(`azureOpenAi/${process.env.AZURE_OPENAI_DEPLOYMENT_NAME}`)) {
-        console.error("SAP Anonymization: Azure OpenAI model specified in .env but not available in Genkit. The 'genkitx-azure-openai' plugin might be disabled or misconfigured due to package issues.");
-        return NextResponse.json({ 
-            error: "SAP Anonymization service is temporarily unavailable due to an issue with the Azure OpenAI integration. Please check server logs or contact support. The 'genkitx-azure-openai' package may need attention." 
-        }, { status: 503 }); // Service Unavailable
-    }
+    // The problematic block that called ai.listModels() has been removed.
+    // The console warning in src/ai/genkit.ts during server startup will indicate if Azure env vars are set but the plugin is disabled.
+    // If the plugin is disabled and an Azure model is attempted, ai.generate() will fail.
       
     const body = await request.json();
     const textToAnonymize = body.text;
@@ -132,7 +128,7 @@ Anonymized Text:`;
     // Check for specific error messages that might indicate model not found or auth issues
     if (error.cause && typeof error.cause === 'string' && error.cause.includes('authentication')) {
         errorMessage = "Authentication failed. Please check your Azure OpenAI API key and endpoint configuration."
-    } else if (error.message && (error.message.toLowerCase().includes('deployment not found') || error.message.toLowerCase().includes('model not found'))) {
+    } else if (error.message && (error.message.toLowerCase().includes('deployment not found') || error.message.toLowerCase().includes('model not found') || error.message.toLowerCase().includes('not found'))) {
         errorMessage = "The specified Azure OpenAI deployment/model name was not found or is not accessible. Please check your configuration and ensure the model is available in Genkit."
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
