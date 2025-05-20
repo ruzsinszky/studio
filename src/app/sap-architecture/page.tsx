@@ -136,8 +136,14 @@ export default function SapArchitecturePage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Anonymization failed");
+        const errorData = await response.json().catch(() => ({ error: "Anonymization API request failed or returned non-JSON response." }));
+        toast({
+          title: "Anonymization Error",
+          description: errorData.error || "Anonymization API request failed.",
+          variant: "destructive",
+        });
+        setIsLoading(false); // Stop loading indicator
+        return; // Exit function
       }
 
       const data = await response.json();
